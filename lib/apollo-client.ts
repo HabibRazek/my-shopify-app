@@ -1,25 +1,26 @@
-// lib/apollo-client.ts
-import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client'
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 
-const shopifyDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN
-const accessToken = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN
+const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN;
+const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
-if (!shopifyDomain || !accessToken) {
-    throw new Error('Missing Shopify environment variables')
+if (!SHOPIFY_DOMAIN || !STOREFRONT_TOKEN) {
+  throw new Error('Missing required Shopify environment variables');
 }
 
-// Remove any accidental protocol or slashes
-const cleanDomain = shopifyDomain
-    .replace(/https?:\/\//, '')
-    .replace(/\/$/, '')
+const httpLink = createHttpLink({
+  uri: `https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`,
+  headers: {
+    'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+    'Content-Type': 'application/json',
+  }
+});
 
-export const apolloClient = new ApolloClient({
-    cache: new InMemoryCache(),
-    link: new HttpLink({
-        uri: `https://${cleanDomain}/api/2023-07/graphql.json`,
-        headers: {
-            'X-Shopify-Storefront-Access-Token': accessToken,
-            'Content-Type': 'application/json'
-        }
-    })
-})
+export const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+  defaultOptions: {
+    query: {
+      fetchPolicy: 'network-only'
+    }
+  }
+});

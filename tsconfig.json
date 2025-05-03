@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "types": ["@apollo/experimental-nextjs-app-support/rsc"],
+    "types": [
+      "@apollo/experimental-nextjs-app-support/rsc"
+    ],
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
