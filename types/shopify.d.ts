@@ -50,15 +50,17 @@ export interface ShopifyCustomer {
 }
 
 export interface ShopifyAddress {
+    firstName?: string;
+    lastName?: string;
+    company?: string;
     address1: string;
     address2?: string;
     city: string;
-    province?: string;
-    country?: string;
+    province: string;
     zip: string;
+    country: string;
+    countryCode?: string;
     phone?: string;
-    firstName?: string;
-    lastName?: string;
 }
 
 export interface ShopifyLineItem {
@@ -87,4 +89,85 @@ export interface ShopifyOrder {
             };
         }>;
     };
+}
+
+export interface OrderItem {
+    variantId: string;
+    quantity: number;
+}
+
+export interface InternationalAddress {
+    firstName: string;
+    lastName: string;
+    company?: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    province: string;
+    zip: string;
+    country: string;
+    countryCode: string;
+    phone: string;
+}
+
+export interface OrderCustomer {
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    acceptsMarketing?: boolean;
+}
+
+export interface OrderPayload {
+    customer: OrderCustomer;
+    address: InternationalAddress;
+    billingAddressSameAsShipping?: boolean;
+    billingAddress?: InternationalAddress;
+    items: OrderItem[];
+    note?: string;
+    tags?: string[];
+    currency?: string;
+    metadata?: Record<string, string | number | boolean>;
+}
+
+export interface CreateOrderResponse {
+    success: boolean;
+    order?: ShopifyOrder;
+    error?: string;
+}
+
+export interface Country {
+    code: string;
+    name: string;
+    phone: string;
+    emoji: string;
+}
+
+export interface Address {
+    firstName: string;
+    lastName: string;
+    company?: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    province: string;
+    zip: string;
+    country: string;
+    countryCode: string;
+    phone: string;
+}
+
+
+export interface CartItemPrice {
+    amount: string;
+    currencyCode: string;
+}
+
+export interface CartItem {
+    id: string;
+    title: string;
+    quantity: number;
+    image: string;
+    price: CartItemPrice;
+    variantId: string;
 }

@@ -118,3 +118,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+.DialogContent {
+    padding: 1.5rem !important;
+    overflow-y: auto !important;
+}
+
+.DialogOverlay {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}

@@ -2,17 +2,13 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import type { ShopifyProduct, ShopifyOrder, ShopifyCustomer, ShopifyAddress } from '@/types/shopify';
-
-interface CartItem extends ShopifyProduct {
-    quantity: number;
-}
+import type { ShopifyOrder, ShopifyCustomer, ShopifyAddress, CartItem } from '@/types/shopify';
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: ShopifyProduct) => void;
-    removeFromCart: (productId: string) => void;
-    updateQuantity: (productId: string, quantity: number) => void;
+    addToCart: (item: CartItem) => void;
+    removeFromCart: (id: string) => void;
+    updateQuantity: (id: string, quantity: number) => void;
     clearCart: () => void;
     cartTotal: number;
     submitOrder: (
@@ -44,29 +40,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('cart', JSON.stringify(cart));
     }, [cart]);
 
-    const addToCart = (product: ShopifyProduct) => {
+    const addToCart = (item: CartItem) => {
         setCart(prevCart => {
-            const existingItem = prevCart.find(item => item.id === product.id);
+            const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
             if (existingItem) {
-                return prevCart.map(item =>
-                    item.id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
+                return prevCart.map(cartItem =>
+                    cartItem.id === item.id
+                        ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                        : cartItem
                 );
             }
-            return [...prevCart, { ...product, quantity: 1 }];
+            return [...prevCart, { ...item, quantity: 1 }];
         });
     };
 
-    const removeFromCart = (productId: string) => {
-        setCart(prevCart => prevCart.filter(item => item.id !== productId));
+    const removeFromCart = (id: string) => {
+        setCart(prevCart => prevCart.filter(item => item.id !== id));
     };
 
-    const updateQuantity = (productId: string, quantity: number) => {
+    const updateQuantity = (id: string, quantity: number) => {
         if (quantity < 1) return;
         setCart(prevCart =>
             prevCart.map(item =>
-                item.id === productId ? { ...item, quantity } : item
+                item.id === id ? { ...item, quantity } : item
             )
         );
     };
@@ -74,7 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const clearCart = () => setCart([]);
 
     const cartTotal = cart.reduce((total, item) => {
-        const price = parseFloat(item.variants.edges[0]?.node.price.amount || '0');
+        const price = parseFloat(item.price.amount);
         return total + (price * item.quantity);
     }, 0);
 
@@ -94,7 +90,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     address,
                     note,
                     items: cart.map(item => ({
-                        variantId: item.variants.edges[0].node.id,
+                        variantId: item.variantId,
                         quantity: item.quantity,
                     })),
                 }),

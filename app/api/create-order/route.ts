@@ -1,30 +1,5 @@
+import { OrderPayload } from '@/types/shopify';
 import { NextResponse } from 'next/server';
-
-interface OrderItem {
-    variantId: string;
-    quantity: number;
-}
-
-interface OrderPayload {
-    customer: {
-        email: string;
-        firstName: string;
-        lastName: string;
-        phone: string;
-    };
-    address: {
-        address1: string;
-        city: string;
-        province: string;
-        zip: string;
-    };
-    items: OrderItem[];
-    note?: string;
-}
-
-function formatVariantId(variantId: string): string {
-    return variantId.replace('gid://shopify/ProductVariant/', '');
-}
 
 export async function POST(request: Request) {
     try {
@@ -51,73 +26,80 @@ export async function POST(request: Request) {
             );
         }
 
-        // Format variant IDs and prepare line items
-        const formattedItems = items.map(item => ({
-            variant_id: formatVariantId(item.variantId),
-            quantity: item.quantity
-        }));
-
         const response = await fetch(
-            `https://${shopDomain}/admin/api/2024-01/draft_orders.json`,
+            `https://${shopDomain}/admin/api/2024-01/orders.json`,
             {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Shopify-Access-Token': adminToken,
+                    'X-Shopify-Access-Token': adminToken as string,
                 },
                 body: JSON.stringify({
-                    draft_order: {
-                        line_items: formattedItems,
+                    order: {
+                        line_items: items.map(item => ({
+                            variant_id: item.variantId.replace('gid://shopify/ProductVariant/', ''),
+                            quantity: item.quantity
+                        })),
                         customer: {
                             email: customer.email,
                             first_name: customer.firstName,
                             last_name: customer.lastName,
                             phone: customer.phone,
+                            accepts_marketing: true
                         },
-                        shipping_address: {
+                        billing_address: {
                             first_name: customer.firstName,
                             last_name: customer.lastName,
                             address1: address.address1,
                             city: address.city,
                             province: address.province,
                             zip: address.zip,
-                            country: "US",
-                            phone: customer.phone,
+                            country: 'Tunisia',
+                            phone: customer.phone
                         },
-                        note,
-                        tags: "COD", // Changed from array to string
-                        financial_status: "pending",
+                        shipping_address: {
+                            first_name: customer.firstName,
+                            last_name: customer.lastName,
+                            address1: address.address1,
+                            address2: address.address2,
+                            city: address.city,
+                            province: address.province,
+                            zip: address.zip,
+                            country: address.country,
+                            country_code: address.countryCode,
+                            phone: customer.phone
+                        },
+                        note: note || '',
+                        tags: 'COD',
+                        financial_status: 'pending',
+                        fulfillment_status: 'unfulfilled',
+                        gateway: 'Cash on Delivery',
+                        currency: 'TND',
                         payment_terms: {
                             payment_terms_type: "net",
                             payment_terms_name: "Cash on Delivery",
                             due_in_days: 0
-                        }
+                        },
+                        shipping_lines: [{
+                            title: `Cash on Delivery - ${address.province}, Tunisia`,
+                            price: '0.00',
+                            code: 'COD'
+                        }]
                     }
                 }),
             }
         );
 
-        const responseData = await response.json();
-
         if (!response.ok) {
-            console.error('Shopify API Error:', responseData);
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: responseData.errors || 'Failed to create order',
-                    details: responseData
-                },
-                { status: response.status }
-            );
+            const errorData = await response.json();
+            console.error('Shopify API Error:', errorData);
+            throw new Error(errorData.errors || 'Failed to create order');
         }
 
+        const data = await response.json();
         return NextResponse.json({
             success: true,
-            order: {
-                id: responseData.draft_order.id,
-                name: responseData.draft_order.name,
-                totalPrice: responseData.draft_order.total_price,
-            },
+            order: data.order
         });
 
     } catch (error) {
@@ -125,7 +107,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
             {
                 success: false,
-                error: error instanceof Error ? error.message : 'Failed to create order',
+                error: error instanceof Error ? error.message : 'Failed to create order'
             },
             { status: 500 }
         );

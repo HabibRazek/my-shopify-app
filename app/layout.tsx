@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ApolloWrapper } from '@/providers/ApolloProvider';
 import { CartProvider } from '@/context/CartContext';
-
+import NavBar from '@/components/NavBar';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'My Shopify Store',
@@ -19,7 +20,11 @@ export default function RootLayout({
       <body>
         <ApolloWrapper>
           <CartProvider>
-            {children}
+            <NavBar />
+            <main className="pt-16"> {/* Add padding-top to account for fixed navbar */}
+              {children}
+              <Toaster position="bottom-center" />
+            </main>
           </CartProvider>
         </ApolloWrapper>
       </body>
